@@ -10,18 +10,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 设置Node.js ${{ matrix.node-version }}
+      - name: 设置Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: '20.x'
           cache: 'npm'
 
       - name: 安装依赖
@@ -42,11 +38,11 @@ jobs:
             echo "❌ 构建失败：dist目录不存在"
             exit 1
           fi
-          if [ ! -f "dist/nodes/FeishuProject/FeishuProject.node.js" ]; then
+          if [ ! -f "dist/nodes/QingflowOa/QingflowOa.node.js" ]; then
             echo "❌ 构建失败：主要节点文件不存在"
             exit 1
           fi
-          if [ ! -f "dist/credentials/FeishuProjectApi.credentials.js" ]; then
+          if [ ! -f "dist/credentials/QingflowOaApi.credentials.js" ]; then
             echo "❌ 构建失败：凭据文件不存在"
             exit 1
           fi

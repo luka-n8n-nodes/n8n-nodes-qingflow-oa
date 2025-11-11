@@ -15,6 +15,7 @@ export class QingflowOa implements INodeType {
 		displayName: '轻流OA',
 		subtitle: '={{ $parameter.resource }}:{{ $parameter.operation }}',
 		name: 'qingflowOa',
+		// eslint-disable-next-line n8n-nodes-base/node-class-description-icon-not-svg
 		icon: 'file:icon.png',
 		group: ['transform'],
 		version: 1,

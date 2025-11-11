@@ -5,8 +5,8 @@ import { jsonParse } from 'n8n-workflow';
 
 const defaultBodyJson = JSON.stringify(
 	{
-		pageSize: null,
-		pageNum: null,
+		pageSize: 50,
+		pageNum: 1,
 	},
 	null,
 	2,
@@ -68,6 +68,21 @@ const GetReportDataListOperate: ResourceOperations = {
 		} catch (error) {
 			throw new Error('请求体 JSON 格式无效: ' + error.message);
 		}
+
+		// 验证分页参数
+		const pageSize = body.pageSize ?? 50;
+		const pageNum = body.pageNum ?? 1;
+
+		if (typeof pageSize !== 'number' || pageSize <= 0) {
+			throw new Error('Page Size 必须大于0');
+		}
+		if (typeof pageNum !== 'number' || pageNum <= 0) {
+			throw new Error('Page Num 必须大于0');
+		}
+
+		// 确保使用正确的默认值
+		body.pageSize = pageSize;
+		body.pageNum = pageNum;
 
 		const response = await RequestUtils.request.call(this, {
 			method: 'POST',

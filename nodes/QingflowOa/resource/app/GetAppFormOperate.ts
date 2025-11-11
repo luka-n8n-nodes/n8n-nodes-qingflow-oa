@@ -19,10 +19,9 @@ const GetAppFormOperate: ResourceOperations = {
 			displayName: 'User ID',
 			name: 'userId',
 			type: 'string',
-			required: false,
+
 			default: '',
-			description:
-				'userId为给定，数据工作区总资格化持续工作权限配置，当前立个数据赋权书',
+			description: 'UserId为给定，数据工作区总资格化持续工作权限配置，当前立个数据赋权书',
 		},
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {

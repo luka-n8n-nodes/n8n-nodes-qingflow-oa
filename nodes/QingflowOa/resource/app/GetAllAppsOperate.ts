@@ -11,7 +11,7 @@ const GetAllAppsOperate: ResourceOperations = {
 			displayName: 'User ID',
 			name: 'userId',
 			type: 'string',
-			required: false,
+
 			default: '',
 			description: '优选方案，可添加当前连接的的程序访问，userId为给定，欢迎工作区全员访问',
 		},
@@ -19,10 +19,9 @@ const GetAllAppsOperate: ResourceOperations = {
 			displayName: 'Favourite',
 			name: 'favourite',
 			type: 'number',
-			required: false,
+
 			default: 0,
-			description:
-				'userId不满足当前，数据展现下：1，工作管理员的可访问数据机器端数据，管理端时（数据权限）',
+			description: 'UserId不满足当前，数据展现下：1，工作管理员的可访问数据机器端数据，管理端时（数据权限）',
 		},
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {

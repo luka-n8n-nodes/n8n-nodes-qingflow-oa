@@ -21,8 +21,16 @@ const CustomRequestOperate: ResourceOperations = {
 			type: 'options',
 			options: [
 				{
+					name: 'DELETE',
+					value: 'DELETE',
+				},
+				{
 					name: 'GET',
 					value: 'GET',
+				},
+				{
+					name: 'PATCH',
+					value: 'PATCH',
 				},
 				{
 					name: 'POST',
@@ -31,14 +39,6 @@ const CustomRequestOperate: ResourceOperations = {
 				{
 					name: 'PUT',
 					value: 'PUT',
-				},
-				{
-					name: 'PATCH',
-					value: 'PATCH',
-				},
-				{
-					name: 'DELETE',
-					value: 'DELETE',
 				},
 			],
 			default: 'GET',
@@ -59,7 +59,7 @@ const CustomRequestOperate: ResourceOperations = {
 			type: 'boolean',
 			default: false,
 			noDataExpression: true,
-			description: '是否发送查询参数',
+			description: 'Whether to send query parameters',
 		},
 		{
 			displayName: 'Specify Query Parameters',
@@ -143,7 +143,7 @@ const CustomRequestOperate: ResourceOperations = {
 			type: 'boolean',
 			default: false,
 			noDataExpression: true,
-			description: '是否发送请求体',
+			description: 'Whether to send request body',
 		},
 		{
 			displayName: 'Specify Body',
@@ -256,7 +256,7 @@ const CustomRequestOperate: ResourceOperations = {
 										'输入将被分批处理以限制请求。 -1 表示禁用。0 将被视为 1。',
 								},
 								{
-									displayName: 'Batch Interval (ms)',
+									displayName: 'Batch Interval (Ms)',
 									name: 'batchInterval',
 									type: 'number',
 									typeOptions: {

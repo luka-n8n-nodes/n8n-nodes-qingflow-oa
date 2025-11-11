@@ -11,15 +11,14 @@ const GetDelegatesOperate: ResourceOperations = {
 			displayName: 'Page Num',
 			name: 'pageNum',
 			type: 'number',
-			required: false,
-			default: 0,
+			default: 1,
 			description: '页码',
 		},
 		{
 			displayName: 'Page First',
 			name: 'pageFirst',
 			type: 'number',
-			required: false,
+
 			default: 0,
 			description: '查询数量',
 		},
@@ -27,7 +26,7 @@ const GetDelegatesOperate: ResourceOperations = {
 			displayName: 'Type',
 			name: 'type',
 			type: 'number',
-			required: false,
+
 			default: 0,
 			description: '委托类型，1委托他人，2被他人委托',
 		},
@@ -35,16 +34,20 @@ const GetDelegatesOperate: ResourceOperations = {
 			displayName: 'Status',
 			name: 'status',
 			type: 'string',
-			required: false,
+
 			default: '',
 			description: '委托状态',
 		},
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
-		const pageNum = this.getNodeParameter('pageNum', index) as number | undefined;
+		const pageNum = this.getNodeParameter('pageNum', index, 1) as number;
 		const pageFirst = this.getNodeParameter('pageFirst', index) as number | undefined;
 		const type = this.getNodeParameter('type', index) as number | undefined;
 		const status = this.getNodeParameter('status', index) as string | undefined;
+
+		if (pageNum <= 0) {
+			throw new Error('Page Num 必须大于0');
+		}
 
 		const requestOptions: IHttpRequestOptions = {
 			method: 'GET',
@@ -52,9 +55,7 @@ const GetDelegatesOperate: ResourceOperations = {
 		};
 
 		const qs: IDataObject = {};
-		if (pageNum !== undefined && pageNum !== null) {
-			qs.pageNum = pageNum;
-		}
+		qs.pageNum = pageNum;
 		if (pageFirst !== undefined && pageFirst !== null) {
 			qs.pageFirst = pageFirst;
 		}

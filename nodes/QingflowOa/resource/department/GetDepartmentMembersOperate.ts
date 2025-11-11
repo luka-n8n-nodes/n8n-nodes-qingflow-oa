@@ -19,9 +19,9 @@ const GetDepartmentMembersOperate: ResourceOperations = {
 			displayName: 'Include Child',
 			name: 'includeChild',
 			type: 'boolean',
-			required: false,
+
 			default: false,
-			description: '是否包含子部门下的成员',
+			description: 'Whether to include members from child departments',
 		},
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {

@@ -20,7 +20,7 @@ const UrgeDataOperate: ResourceOperations = {
 			displayName: 'User ID',
 			name: 'userId',
 			type: 'string',
-			required: false,
+
 			default: '',
 			description: '需要收入工具表单内容数据的ApplyId，在数据方式基于，基本专业级内司',
 		},

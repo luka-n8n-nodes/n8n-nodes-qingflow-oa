@@ -11,7 +11,7 @@ const GetDepartmentsOperate: ResourceOperations = {
 			displayName: 'Dept ID',
 			name: 'deptId',
 			type: 'string',
-			required: false,
+
 			default: '',
 			description: '部门ID，可获取指定部门子部门列表（可选参数）',
 		},

@@ -12,19 +12,22 @@ const GetUsersOperate: ResourceOperations = {
 			name: 'returnAll',
 			type: 'boolean',
 			default: false,
-			description: '是否返回所有结果（递归获取所有分页数据）',
+			description: 'Whether to return all results or only up to a given limit',
 		},
 		{
 			displayName: 'Limit',
 			name: 'limit',
 			type: 'number',
+			typeOptions: {
+				minValue: 1,
+			},
 			default: 50,
 			displayOptions: {
 				show: {
 					returnAll: [false],
 				},
 			},
-			description: '每页返回的记录数',
+			description: 'Max number of results to return',
 		},
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {

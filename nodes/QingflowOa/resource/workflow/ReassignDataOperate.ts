@@ -29,7 +29,7 @@ const ReassignDataOperate: ResourceOperations = {
 			type: 'string',
 			required: true,
 			default: '',
-			description: '数据ID 对应字段变成数据Id',
+			description: '数据 ID 对应字段变成数据 ID',
 		},
 		{
 			displayName: 'Body',

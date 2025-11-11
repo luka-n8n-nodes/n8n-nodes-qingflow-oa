@@ -11,7 +11,7 @@ const GetSubManagersOperate: ResourceOperations = {
 			displayName: 'Sub Manager ID',
 			name: 'subManagerId',
 			type: 'number',
-			required: false,
+
 			default: 0,
 			description: '子管理员ID，获取某个子管理员详情（可选参数）',
 		},

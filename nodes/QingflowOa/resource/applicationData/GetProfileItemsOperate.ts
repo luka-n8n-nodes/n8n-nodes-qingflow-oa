@@ -11,23 +11,21 @@ const GetProfileItemsOperate: ResourceOperations = {
 			displayName: 'Page Size',
 			name: 'pageSize',
 			type: 'number',
-			required: false,
-			default: 0,
+			default: 50,
 			description: '每页数量',
 		},
 		{
 			displayName: 'Page Num',
 			name: 'pageNum',
 			type: 'number',
-			required: false,
-			default: 0,
+			default: 1,
 			description: '页码，从1开始',
 		},
 		{
 			displayName: 'UUID',
 			name: 'uuid',
 			type: 'string',
-			required: false,
+
 			default: '',
 			description: '用户数',
 		},
@@ -35,17 +33,24 @@ const GetProfileItemsOperate: ResourceOperations = {
 			displayName: 'Status',
 			name: 'status',
 			type: 'number',
-			required: false,
+
 			default: 0,
 			description:
 				'工件内容采集情况，例如：申请、工件、工站、工件、检验批量，action内容关联 applyId (申请ID)',
 		},
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
-		const pageSize = this.getNodeParameter('pageSize', index) as number | undefined;
-		const pageNum = this.getNodeParameter('pageNum', index) as number | undefined;
+		const pageSize = this.getNodeParameter('pageSize', index, 50) as number;
+		const pageNum = this.getNodeParameter('pageNum', index, 1) as number;
 		const uuid = this.getNodeParameter('uuid', index) as string | undefined;
 		const status = this.getNodeParameter('status', index) as number | undefined;
+
+		if (pageSize <= 0) {
+			throw new Error('Page Size 必须大于0');
+		}
+		if (pageNum <= 0) {
+			throw new Error('Page Num 必须大于0');
+		}
 
 		const requestOptions: IHttpRequestOptions = {
 			method: 'GET',
@@ -53,12 +58,8 @@ const GetProfileItemsOperate: ResourceOperations = {
 		};
 
 		const qs: IDataObject = {};
-		if (pageSize !== undefined && pageSize !== null) {
-			qs.pageSize = pageSize;
-		}
-		if (pageNum !== undefined && pageNum !== null) {
-			qs.pageNum = pageNum;
-		}
+		qs.pageSize = pageSize;
+		qs.pageNum = pageNum;
 		if (uuid) {
 			qs.uuid = uuid;
 		}

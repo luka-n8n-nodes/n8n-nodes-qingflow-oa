@@ -11,7 +11,7 @@ const GetAppInfoOperate: ResourceOperations = {
 			displayName: 'App Key',
 			name: 'appKey',
 			type: 'string',
-			required: false,
+
 			default: '',
 			description: '应用标识，不带查询参数上工作区的增属性',
 		},
@@ -19,7 +19,7 @@ const GetAppInfoOperate: ResourceOperations = {
 			displayName: 'Page First',
 			name: 'pageFirst',
 			type: 'number',
-			required: false,
+
 			default: 0,
 			description: '查面通过当事',
 		},
@@ -27,15 +27,18 @@ const GetAppInfoOperate: ResourceOperations = {
 			displayName: 'Page Num',
 			name: 'pageNum',
 			type: 'number',
-			required: false,
-			default: 0,
+			default: 1,
 			description: '页步列表',
 		},
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
 		const appKey = this.getNodeParameter('appKey', index) as string | undefined;
 		const pageFirst = this.getNodeParameter('pageFirst', index) as number | undefined;
-		const pageNum = this.getNodeParameter('pageNum', index) as number | undefined;
+		const pageNum = this.getNodeParameter('pageNum', index, 1) as number;
+
+		if (pageNum <= 0) {
+			throw new Error('Page Num 必须大于0');
+		}
 
 		const requestOptions: IHttpRequestOptions = {
 			method: 'GET',
@@ -49,9 +52,7 @@ const GetAppInfoOperate: ResourceOperations = {
 		if (pageFirst !== undefined && pageFirst !== null) {
 			qs.pageFirst = pageFirst;
 		}
-		if (pageNum !== undefined && pageNum !== null) {
-			qs.pageNum = pageNum;
-		}
+		qs.pageNum = pageNum;
 
 		if (Object.keys(qs).length > 0) {
 			requestOptions.qs = qs;

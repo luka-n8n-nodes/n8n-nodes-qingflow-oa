@@ -20,7 +20,7 @@ const GetCommentsOperate: ResourceOperations = {
 			name: 'pageSize',
 			type: 'number',
 			required: true,
-			default: 10,
+			default: 50,
 			description: '每页数量',
 		},
 		{
