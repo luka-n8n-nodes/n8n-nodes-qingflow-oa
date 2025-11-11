@@ -12,7 +12,7 @@ export class QingflowOaApi implements ICredentialType {
     displayName = '轻流 OA API';
     documentationUrl = 'https://exiao.yuque.com/ixwxsb/cqfg2y/aec4bgwwblaol97b';
     // @ts-ignore
-    icon = 'file:icon.png';
+    icon = 'file:icon.svg';
     properties: INodeProperties[] = [
         {
             displayName: '请求地址',
