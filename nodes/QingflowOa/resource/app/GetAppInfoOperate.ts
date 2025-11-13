@@ -11,56 +11,95 @@ const GetAppInfoOperate: ResourceOperations = {
 			displayName: 'App Key',
 			name: 'appKey',
 			type: 'string',
-
 			default: '',
 			description: '应用标识，不带查询参数上工作区的增属性',
 		},
 		{
-			displayName: 'Page First',
-			name: 'pageFirst',
-			type: 'number',
-
-			default: 0,
-			description: '查面通过当事',
+			displayName: 'Return All',
+			name: 'returnAll',
+			type: 'boolean',
+			default: false,
+			description: 'Whether to return all results or only up to a given limit',
 		},
 		{
-			displayName: 'Page Num',
-			name: 'pageNum',
+			displayName: 'Limit',
+			name: 'limit',
 			type: 'number',
-			default: 1,
-			description: '页步列表',
+			typeOptions: {
+				minValue: 1,
+			},
+			default: 50,
+			displayOptions: {
+				show: {
+					returnAll: [false],
+				},
+			},
+			description: 'Max number of results to return',
 		},
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
 		const appKey = this.getNodeParameter('appKey', index) as string | undefined;
-		const pageFirst = this.getNodeParameter('pageFirst', index) as number | undefined;
-		const pageNum = this.getNodeParameter('pageNum', index, 1) as number;
+		const returnAll = this.getNodeParameter('returnAll', index, false) as boolean;
+		let limit = this.getNodeParameter('limit', index, 50) as number;
 
-		if (pageNum <= 0) {
-			throw new Error('Page Num 必须大于0');
+		// 限制最大值
+		if (limit > 200) {
+			limit = 200;
+			this.logger.warn('Limit 超过最大值 200，已自动调整为 200');
 		}
 
-		const requestOptions: IHttpRequestOptions = {
-			method: 'GET',
-			url: '/app/apps',
+		// 统一的请求函数
+		const fetchPage = async (pageNum: number, pageSize: number) => {
+			const requestOptions: IHttpRequestOptions = {
+				method: 'GET',
+				url: '/app/apps',
+			};
+
+			const qs: IDataObject = {};
+			if (appKey) {
+				qs.appKey = appKey;
+			}
+			qs.pageNum = pageNum;
+			qs.pageSize = pageSize;
+
+			if (Object.keys(qs).length > 0) {
+				requestOptions.qs = qs;
+			}
+
+			const response = await RequestUtils.request.call(this, requestOptions);
+			return {
+				data: response?.result || [],
+				total: response?.resultAmount || 0,
+			};
 		};
 
-		const qs: IDataObject = {};
-		if (appKey) {
-			qs.appKey = appKey;
-		}
-		if (pageFirst !== undefined && pageFirst !== null) {
-			qs.pageFirst = pageFirst;
-		}
-		qs.pageNum = pageNum;
+		// 处理分页逻辑
+		if (returnAll) {
+			let allResults: any[] = [];
+			let pageNum = 1;
+			const pageSize = limit;
 
-		if (Object.keys(qs).length > 0) {
-			requestOptions.qs = qs;
+			while (true) {
+				const { data, total } = await fetchPage(pageNum, pageSize);
+				allResults = allResults.concat(data);
+
+				// 检查是否还有更多数据
+				if (allResults.length >= total || pageNum >= 1000) {
+					if (pageNum >= 1000) {
+						this.logger.warn('已达到最大分页数限制(1000页)，停止获取');
+					}
+					break;
+				}
+
+				pageNum++;
+			}
+
+			return allResults;
+		} else {
+			// 单次请求，返回第一页数据
+			const { data } = await fetchPage(1, limit);
+			return data;
 		}
-
-		const response = await RequestUtils.request.call(this, requestOptions);
-
-		return response as IDataObject | IDataObject[];
 	},
 };
 

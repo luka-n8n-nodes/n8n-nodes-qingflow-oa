@@ -32,7 +32,13 @@ const GetUsersOperate: ResourceOperations = {
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
 		const returnAll = this.getNodeParameter('returnAll', index, false) as boolean;
-		const limit = this.getNodeParameter('limit', index, 50) as number;
+		let limit = this.getNodeParameter('limit', index, 50) as number;
+
+		// 限制最大值
+		if (limit > 200) {
+			limit = 200;
+			this.logger.warn('Limit 超过最大值 200，已自动调整为 200');
+		}
 
 		// 统一的请求函数
 		const fetchPage = async (pageNum: number, pageSize: number) => {
@@ -54,7 +60,7 @@ const GetUsersOperate: ResourceOperations = {
 		if (returnAll) {
 			let allResults: any[] = [];
 			let pageNum = 1;
-			const pageSize = limit || 50;
+			const pageSize = limit;
 
 			while (true) {
 				const { data, total } = await fetchPage(pageNum, pageSize);
