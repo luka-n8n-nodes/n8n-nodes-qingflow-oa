@@ -4,11 +4,35 @@ import {
 	IHttpRequestMethods,
 	IHttpRequestOptions,
 	INodeProperties,
+	jsonParse,
+	sleep,
 } from 'n8n-workflow';
 import RequestUtils from '../../../help/utils/RequestUtils';
 import { ResourceOperations } from '../../../help/type/IResource';
-import { jsonParse } from 'n8n-workflow';
-import { sleep } from 'n8n-workflow';
+
+const DEFAULT_PAGE_SIZE = 200;
+const DEFAULT_MAX_PAGES = 1000;
+
+interface PaginationConfig {
+	pageSizeField?: string;
+	pageNumField?: string;
+	dataPath?: string;
+	totalPath?: string;
+	maxPages?: number;
+	paginationInterval?: number;
+}
+
+interface RequestOptions {
+	batching?: { batch?: { batchSize?: number; batchInterval?: number } };
+	timeout?: number;
+	returnAll?: boolean;
+	paginationConfig?: { config?: PaginationConfig };
+}
+
+interface ParameterItem {
+	name: string;
+	value: string;
+}
 
 const CustomRequestOperate: ResourceOperations = {
 	name: '自定义请求',
@@ -273,13 +297,6 @@ const CustomRequestOperate: ResourceOperations = {
 									description: '页码参数的字段名（如：pageNum, page, offset）',
 								},
 								{
-									displayName: 'Page Number Start',
-									name: 'pageNumStart',
-									type: 'number',
-									default: 1,
-									description: '页码起始值（通常是 0 或 1）',
-								},
-								{
 									displayName: 'Page Size Field',
 									name: 'pageSizeField',
 									type: 'string',
@@ -376,107 +393,98 @@ const CustomRequestOperate: ResourceOperations = {
 		const url = this.getNodeParameter('url', index) as string;
 		const sendQuery = this.getNodeParameter('sendQuery', index, false) as boolean;
 		const sendBody = this.getNodeParameter('sendBody', index, false) as boolean;
-		const options = this.getNodeParameter('options', index, {}) as {
-			batching?: { batch?: { batchSize?: number; batchInterval?: number } };
-			timeout?: number;
-			returnAll?: boolean;
-			paginationConfig?: {
-				config?: {
-					pageSizeField?: string;
-					pageNumField?: string;
-					pageNumStart?: number;
-					dataPath?: string;
-					totalPath?: string;
-					maxPages?: number;
-					paginationInterval?: number;
-				};
-			};
-		};
+		const options = this.getNodeParameter('options', index, {}) as RequestOptions;
 
-		// 辅助函数：根据路径从对象中获取值
 		const getValueByPath = (obj: any, path: string): any => {
 			if (!path) return obj;
 			return path.split('.').reduce((current, key) => current?.[key], obj);
 		};
 
-		// 构建基础请求选项
+		const parseKeyValuePairs = (parameters: ParameterItem[]): IDataObject => {
+			const result: IDataObject = {};
+			parameters.forEach((param) => {
+				if (param.name) {
+					result[param.name] = param.value;
+				}
+			});
+			return result;
+		};
+
+		const parseParameters = (
+			paramName: string,
+			specifyName: string,
+			jsonParamName: string,
+			errorMsg: string,
+		): IDataObject | undefined => {
+			const specifyType = this.getNodeParameter(specifyName, index, 'keypair') as string;
+
+			if (specifyType === 'keypair') {
+				const parameters = this.getNodeParameter(paramName, index, []) as ParameterItem[];
+				return parameters.length > 0 ? parseKeyValuePairs(parameters) : undefined;
+			}
+
+			if (specifyType === 'json') {
+				const jsonString = this.getNodeParameter(jsonParamName, index, '') as string;
+				if (jsonString) {
+					try {
+						return jsonParse(jsonString);
+					} catch (error) {
+						throw new Error(errorMsg);
+					}
+				}
+			}
+
+			return undefined;
+		};
+
+		const applyPaginationParams = (
+			params: IDataObject,
+			pageNum: number,
+			config: PaginationConfig,
+		): void => {
+			const pageSizeField = config.pageSizeField || 'pageSize';
+			const pageNumField = config.pageNumField || 'pageNum';
+
+			params[pageNumField] = pageNum;
+			if (!params[pageSizeField]) {
+				params[pageSizeField] = DEFAULT_PAGE_SIZE;
+			}
+		};
+
 		const buildRequestOptions = (pageNum?: number): IHttpRequestOptions => {
-			const requestOptions: IHttpRequestOptions = {
-				method,
-				url,
-				json: true,
-			};
+			const requestOptions: IHttpRequestOptions = { method, url, json: true };
 
-			// 处理查询参数
 			if (sendQuery) {
-				const specifyQuery = this.getNodeParameter('specifyQuery', index, 'keypair') as string;
-				if (specifyQuery === 'keypair') {
-					const queryParameters = this.getNodeParameter(
-						'queryParameters.parameters',
-						index,
-						[],
-					) as Array<{ name: string; value: string }>;
-					if (queryParameters && queryParameters.length > 0) {
-						requestOptions.qs = {} as IDataObject;
-						for (const param of queryParameters) {
-							if (param.name) {
-								(requestOptions.qs as IDataObject)[param.name] = param.value;
-							}
-						}
-					}
-				} else if (specifyQuery === 'json') {
-					const jsonQuery = this.getNodeParameter('jsonQuery', index, '') as string;
-					if (jsonQuery) {
-						try {
-							requestOptions.qs = jsonParse(jsonQuery);
-						} catch (error) {
-							throw new Error('查询参数 JSON 格式无效');
-						}
-					}
-				}
+				const qs = parseParameters(
+					'queryParameters.parameters',
+					'specifyQuery',
+					'jsonQuery',
+					'查询参数 JSON 格式无效',
+				);
+				if (qs) requestOptions.qs = qs;
 			}
 
-			// 处理请求体
 			if (sendBody) {
-				const specifyBody = this.getNodeParameter('specifyBody', index, 'keypair') as string;
-				if (specifyBody === 'keypair') {
-					const bodyParameters = this.getNodeParameter(
-						'bodyParameters.parameters',
-						index,
-						[],
-					) as Array<{ name: string; value: string }>;
-					if (bodyParameters && bodyParameters.length > 0) {
-						requestOptions.body = {} as IDataObject;
-						for (const param of bodyParameters) {
-							if (param.name) {
-								(requestOptions.body as IDataObject)[param.name] = param.value;
-							}
-						}
-					}
-				} else if (specifyBody === 'json') {
-					const jsonBody = this.getNodeParameter('jsonBody', index, '') as string;
-					if (jsonBody) {
-						try {
-							requestOptions.body = jsonParse(jsonBody);
-						} catch (error) {
-							throw new Error('请求体 JSON 格式无效');
-						}
-					}
-				}
+				const body = parseParameters(
+					'bodyParameters.parameters',
+					'specifyBody',
+					'jsonBody',
+					'请求体 JSON 格式无效',
+				);
+				if (body) requestOptions.body = body;
 			}
 
-			// 如果指定了页码，更新分页参数
 			if (pageNum !== undefined && options.returnAll) {
-				const pageNumField =
-					options.paginationConfig?.config?.pageNumField || 'pageNum';
-				if (requestOptions.qs) {
-					(requestOptions.qs as IDataObject)[pageNumField] = pageNum;
-				} else if (requestOptions.body) {
-					(requestOptions.body as IDataObject)[pageNumField] = pageNum;
+				const config = options.paginationConfig?.config || {};
+
+				if (!requestOptions.qs && !requestOptions.body) {
+					requestOptions.qs = {};
 				}
+
+				const targetParams = (requestOptions.qs || requestOptions.body) as IDataObject;
+				applyPaginationParams(targetParams, pageNum, config);
 			}
 
-			// 处理超时
 			if (options.timeout) {
 				requestOptions.timeout = options.timeout;
 			}
@@ -484,82 +492,92 @@ const CustomRequestOperate: ResourceOperations = {
 			return requestOptions;
 		};
 
-		// 处理批处理
-		const batchSize = options.batching?.batch?.batchSize ?? -1;
-		const batchInterval = options.batching?.batch?.batchInterval ?? 0;
+		const handleBatchDelay = async (): Promise<void> => {
+			const batchSize = options.batching?.batch?.batchSize ?? -1;
+			const batchInterval = options.batching?.batch?.batchInterval ?? 0;
 
-		// 处理批处理延迟
-		if (index > 0 && batchSize >= 0 && batchInterval > 0) {
-			if (index % (batchSize > 0 ? batchSize : 1) === 0) {
-				await sleep(batchInterval);
+			if (index > 0 && batchSize >= 0 && batchInterval > 0) {
+				const effectiveBatchSize = batchSize > 0 ? batchSize : 1;
+				if (index % effectiveBatchSize === 0) {
+					await sleep(batchInterval);
+				}
 			}
-		}
+		};
 
-		// 判断是否需要分页获取所有数据
-		const returnAll = options.returnAll || false;
+		const fetchAllPages = async (): Promise<any[]> => {
+			const config = options.paginationConfig?.config || {};
+			const dataPath = config.dataPath || 'result';
+			const totalPath = config.totalPath || 'resultAmount';
+			const maxPages = config.maxPages || DEFAULT_MAX_PAGES;
+			const paginationInterval = config.paginationInterval ?? 0;
 
-		if (!returnAll) {
-			// 单次请求
-			const requestOptions = buildRequestOptions();
-			return await RequestUtils.request.call(this, requestOptions);
-		}
+			const allResults: any[] = [];
+			let pageNum = 1;
 
-		// 分页获取所有数据
-		const paginationConfig = options.paginationConfig?.config || {};
-		const pageNumStart = paginationConfig.pageNumStart ?? 1;
-		const dataPath = paginationConfig.dataPath || 'result';
-		const totalPath = paginationConfig.totalPath || 'resultAmount';
-		const maxPages = paginationConfig.maxPages || 1000;
-		const paginationInterval = paginationConfig.paginationInterval ?? 0;
-
-		let allResults: any[] = [];
-		let pageNum = pageNumStart;
-
-		while (true) {
 			const requestOptions = buildRequestOptions(pageNum);
 			const response = await RequestUtils.request.call(this, requestOptions);
 
-			// 从响应中提取数据和总数
-			const data = getValueByPath(response, dataPath) || [];
-			const total = getValueByPath(response, totalPath) || 0;
+			const data = getValueByPath(response, dataPath);
+			const total = getValueByPath(response, totalPath);
 
-			// 合并结果
-			if (Array.isArray(data)) {
-				allResults = allResults.concat(data);
-			} else {
+			const hasPaginationStructure = data !== undefined && total !== undefined;
+
+			if (!hasPaginationStructure) {
+				this.logger.info('响应数据不包含分页结构，返回原始响应数据');
+				return Array.isArray(response) ? response : [response];
+			}
+
+			if (!Array.isArray(data)) {
 				this.logger.warn(
 					`响应数据路径 "${dataPath}" 返回的不是数组，尝试直接使用响应数据`,
 				);
-				if (Array.isArray(response)) {
-					allResults = allResults.concat(response);
-				} else {
-					allResults.push(response);
-				}
-				break;
+				return Array.isArray(response) ? response : [response];
 			}
 
-			// 检查是否还有更多数据
-			if (allResults.length >= total || pageNum - pageNumStart + 1 >= maxPages) {
-				if (pageNum - pageNumStart + 1 >= maxPages) {
-					this.logger.warn(`已达到最大分页数限制(${maxPages}页)，停止获取`);
-				}
-				break;
-			}
+			allResults.push(...data);
 
-			// 如果当前页没有数据，停止
-			if (data.length === 0) {
-				break;
+			if (allResults.length >= total || data.length === 0) {
+				return allResults;
 			}
 
 			pageNum++;
 
-			// 分页间隔延迟（使用 paginationInterval，避免触发频控）
-			if (paginationInterval > 0) {
-				await sleep(paginationInterval);
+			while (true) {
+				if (paginationInterval > 0) {
+					await sleep(paginationInterval);
+				}
+
+				const nextRequestOptions = buildRequestOptions(pageNum);
+				const nextResponse = await RequestUtils.request.call(this, nextRequestOptions);
+				const nextData = getValueByPath(nextResponse, dataPath) || [];
+				const nextTotal = getValueByPath(nextResponse, totalPath) || 0;
+
+				if (!Array.isArray(nextData)) {
+					break;
+				}
+
+				allResults.push(...nextData);
+
+				if (allResults.length >= nextTotal || pageNum >= maxPages || nextData.length === 0) {
+					if (pageNum >= maxPages) {
+						this.logger.warn(`已达到最大分页数限制(${maxPages}页)，停止获取`);
+					}
+					break;
+				}
+
+				pageNum++;
 			}
+
+			return allResults;
+		};
+
+		await handleBatchDelay();
+
+		if (!options.returnAll) {
+			return await RequestUtils.request.call(this, buildRequestOptions());
 		}
 
-		return allResults;
+		return await fetchAllPages();
 	},
 };
 
