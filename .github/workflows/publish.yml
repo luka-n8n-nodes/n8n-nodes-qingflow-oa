@@ -22,6 +22,7 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: 正式环境
     permissions:
       contents: write
       packages: write
