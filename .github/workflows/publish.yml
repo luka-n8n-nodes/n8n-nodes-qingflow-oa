@@ -87,8 +87,6 @@ jobs:
       - name: 发布到NPM
         run: |
           npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: 生成变更日志
         id: changelog
