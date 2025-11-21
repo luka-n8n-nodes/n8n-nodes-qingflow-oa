@@ -19,16 +19,21 @@ class RequestUtils {
 			return response;
 		}
 
-		const { errCode, errMsg, result } = response || {};
-
-		// 正常响应，返回 result 字段或原始响应
+		const { errCode, errMsg, result, pageAmount, pageSize, pageNum, resultAmount } = response || {};
+		// 如果存在分页相关字段，返回完整的 response（包含分页信息）
+		// Fuck OA，部分接口结构体不统一
+		if (pageAmount !== undefined || pageSize !== undefined || pageNum !== undefined || resultAmount !== undefined) {
+			return response;
+		}
+		// 正常响应
 		if (errCode === 0) {
+			// 否则返回 result 字段或原始响应
 			return result || response;
 		}
-
+      
 		// 业务错误（轻流OA返回 200 但 errCode 不为 0）
 		const errorPrefix = isRetry ? '刷新凭证后请求轻流OA API仍然失败' : '请求轻流OA API错误';
-		const errorMsg = `${errorPrefix}: ${errMsg || JSON.stringify(response)}`;
+		const errorMsg = `${errorPrefix}: ${errMsg}`;
 		
 		throw new NodeApiError(context.getNode(), response as JsonObject, {
 			message: errorMsg,
@@ -77,28 +82,25 @@ class RequestUtils {
 	}
 
 	static async request(this: IExecuteFunctions, options: IHttpRequestOptions) {
-		if (options.json === undefined) options.json = true;
+		try {
+			// 首次请求
+			const response = await RequestUtils.originRequest.call(this, options);
+			const { errCode } = response || {};
 
-		return RequestUtils.originRequest
-			.call(this, options)
-			.then(async (response) => {
-				const { errCode } = response || {};
+			// 处理 token 过期（轻流OA即使错误也返回 200，所以需要检查 errCode）
+			if (errCode === 49300) {
+				// 重新获取 token 后的请求
+				const retryResponse = await RequestUtils.originRequest.call(this, options, true);
+				// 使用统一的响应处理函数，标记为重试请求
+				return RequestUtils.handleResponse(this, retryResponse, true);
+			}
 
-				// 处理 token 过期（轻流OA即使错误也返回 200，所以在 then 中处理）
-				if (errCode === 49300) {
-					// 重新获取 token 后的请求
-					const retryResponse = await RequestUtils.originRequest.call(this, options, true);
-					// 使用统一的响应处理函数，标记为重试请求
-					return RequestUtils.handleResponse(this, retryResponse, true);
-				}
-
-				// 使用统一的响应处理函数
-				return RequestUtils.handleResponse(this, response);
-			})
-			.catch((error) => {
-				// 处理真正的网络错误或其他异常（非200响应）
-				throw error;
-			});
+			// 使用统一的响应处理函数
+			return RequestUtils.handleResponse(this, response);
+		} catch (error) {
+			// 处理真正的网络错误或其他异常（非200响应）
+			throw error;
+		}
 	}
 }
 

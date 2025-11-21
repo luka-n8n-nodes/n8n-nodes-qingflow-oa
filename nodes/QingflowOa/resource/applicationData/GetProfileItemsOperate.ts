@@ -1,4 +1,4 @@
-import { IDataObject, IExecuteFunctions, IHttpRequestOptions } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions } from 'n8n-workflow';
 import RequestUtils from '../../../help/utils/RequestUtils';
 import { ResourceOperations } from '../../../help/type/IResource';
 
@@ -18,17 +18,165 @@ const GetProfileItemsOperate: ResourceOperations = {
 		{
 			displayName: 'Type',
 			name: 'type',
-			type: 'number',
-			default: 0,
-			description: '1:待办事项；2：我的申请；3：抄送；4：草稿；5：已办事项',
+			type: 'options',
+			options: [
+				{
+					name: '待办事项',
+					value: 1,
+				},
+				{
+					name: '我的申请',
+					value: 2,
+				},
+				{
+					name: '抄送',
+					value: 3,
+				},
+				{
+					name: '草稿',
+					value: 4,
+				},
+				{
+					name: '已办事项',
+					value: 5,
+				},
+			],
+			default: 1,
+			description: '事项类型',
 		},
 		{
 			displayName: 'Status',
 			name: 'status',
-			type: 'number',
-			default: 0,
-			description:
-				'根据type值进行进一步筛选。type为1时：1:全部,4:催办,5:即将超时,6:已超时；type为2时：1:全部,2:通过,3:拒绝,4:待完善,5:流程中；type为3时：1:全部,3:未读；type为4时：1:全部；type为5时：1:全部,2:通过,3:拒绝,5:流程中',
+			type: 'options',
+			displayOptions: {
+				show: {
+					type: [1],
+				},
+			},
+			options: [
+				{
+					name: '全部',
+					value: 1,
+				},
+				{
+					name: '催办',
+					value: 4,
+				},
+				{
+					name: '即将超时',
+					value: 5,
+				},
+				{
+					name: '已超时',
+					value: 6,
+				},
+			],
+			default: 1,
+			description: '待办事项状态筛选',
+		},
+		{
+			displayName: 'Status',
+			name: 'status',
+			type: 'options',
+			displayOptions: {
+				show: {
+					type: [2],
+				},
+			},
+			options: [
+				{
+					name: '全部',
+					value: 1,
+				},
+				{
+					name: '通过',
+					value: 2,
+				},
+				{
+					name: '拒绝',
+					value: 3,
+				},
+				{
+					name: '待完善',
+					value: 4,
+				},
+				{
+					name: '流程中',
+					value: 5,
+				},
+			],
+			default: 1,
+			description: '我的申请状态筛选',
+		},
+		{
+			displayName: 'Status',
+			name: 'status',
+			type: 'options',
+			displayOptions: {
+				show: {
+					type: [3],
+				},
+			},
+			options: [
+				{
+					name: '全部',
+					value: 1,
+				},
+				{
+					name: '未读',
+					value: 3,
+				},
+			],
+			default: 1,
+			description: '抄送状态筛选',
+		},
+		{
+			displayName: 'Status',
+			name: 'status',
+			type: 'options',
+			displayOptions: {
+				show: {
+					type: [4],
+				},
+			},
+			options: [
+				{
+					name: '全部',
+					value: 1,
+				},
+			],
+			default: 1,
+			description: '草稿状态筛选',
+		},
+		{
+			displayName: 'Status',
+			name: 'status',
+			type: 'options',
+			displayOptions: {
+				show: {
+					type: [5],
+				},
+			},
+			options: [
+				{
+					name: '全部',
+					value: 1,
+				},
+				{
+					name: '通过',
+					value: 2,
+				},
+				{
+					name: '拒绝',
+					value: 3,
+				},
+				{
+					name: '流程中',
+					value: 5,
+				},
+			],
+			default: 1,
+			description: '已办事项状态筛选',
 		},
 		{
 			displayName: 'Return All',
@@ -70,34 +218,35 @@ const GetProfileItemsOperate: ResourceOperations = {
 			this.logger.warn('Limit 超过最大值 200，已自动调整为 200');
 		}
 
-		// 统一的请求函数
-		const fetchPage = async (pageNum: number, pageSize: number) => {
-			const requestOptions: IHttpRequestOptions = {
-				method: 'GET',
-				url: '/dynamic/audits',
-			};
-
-			const qs: IDataObject = {};
-			qs.pageSize = pageSize;
-			qs.pageNum = pageNum;
-			qs.userId = userId;
-			if (type !== undefined && type !== null) {
-				qs.type = type;
-			}
-			if (status !== undefined && status !== null) {
-				qs.status = status;
-			}
-
-			if (Object.keys(qs).length > 0) {
-				requestOptions.qs = qs;
-			}
-
-			const response = await RequestUtils.request.call(this, requestOptions);
-			return {
-				data: response?.result || [],
-				total: response?.resultAmount || 0,
-			};
+	// 统一的请求函数
+	const fetchPage = async (pageNum: number, pageSize: number) => {
+		const qs: IDataObject = {
+			pageSize,
+			pageNum,
+			userId,
 		};
+		
+		// 只在有值时添加可选参数
+		if (type !== undefined && type !== null) {
+			qs.type = type;
+		}
+		if (status !== undefined && status !== null) {
+			qs.status = status;
+		}
+
+		const response = await RequestUtils.request.call(this, {
+			method: 'GET',
+			url: '/dynamic/audits',
+			qs,
+			json: true,
+		});
+		
+		return {
+			data: response?.result || [],
+			total: response?.resultAmount || 0,
+		};
+	};
+		
 
 		// 处理分页逻辑
 		if (returnAll) {
@@ -110,7 +259,7 @@ const GetProfileItemsOperate: ResourceOperations = {
 				allResults = allResults.concat(data);
 
 				// 检查是否还有更多数据
-				if (allResults.length >= total || pageNum >= 1000) {
+				if (allResults.length >= total || pageNum >= 1000 || data.length === 0) {
 					if (pageNum >= 1000) {
 						this.logger.warn('已达到最大分页数限制(1000页)，停止获取');
 					}
