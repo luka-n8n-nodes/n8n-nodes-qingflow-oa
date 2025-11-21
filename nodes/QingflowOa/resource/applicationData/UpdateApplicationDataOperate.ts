@@ -37,7 +37,6 @@ const UpdateApplicationDataOperate: ResourceOperations = {
 		},
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
-		const appKey = this.getNodeParameter('appKey', index) as string;
 		const applyId = this.getNodeParameter('applyId', index) as string;
 		const bodyJson = this.getNodeParameter('body', index) as string;
 
