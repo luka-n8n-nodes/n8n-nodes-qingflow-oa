@@ -84,9 +84,11 @@ jobs:
           test -f dist/credentials/QingflowOaApi.credentials.js && echo "✅ QingflowOaApi.credentials.js 存在"
           test -f dist/package.json && echo "✅ dist/package.json 存在"
 
-      - name: 发布到NPM
+      - name: 发布到NPM（带可信任发布）
         run: |
-          npm publish
+          npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: 生成变更日志
         id: changelog
