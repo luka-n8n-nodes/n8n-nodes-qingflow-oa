@@ -1,7 +1,7 @@
-import { IDataObject, IExecuteFunctions } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, NodeOperationError  } from 'n8n-workflow';
 import RequestUtils from '../../../help/utils/RequestUtils';
 import { ResourceOperations } from '../../../help/type/IResource';
-import { NodeOperationError } from 'n8n-workflow';
+
 
 const GetUserIdOperate: ResourceOperations = {
 	name: '通过邮箱或手机号获取成员userId',

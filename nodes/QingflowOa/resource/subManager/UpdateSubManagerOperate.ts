@@ -1,7 +1,7 @@
-import { IDataObject, IExecuteFunctions } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, jsonParse  } from 'n8n-workflow';
 import RequestUtils from '../../../help/utils/RequestUtils';
 import { ResourceOperations } from '../../../help/type/IResource';
-import { jsonParse } from 'n8n-workflow';
+
 
 const defaultBodyJson = JSON.stringify(
 	{

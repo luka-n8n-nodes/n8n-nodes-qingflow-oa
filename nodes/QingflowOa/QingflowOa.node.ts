@@ -7,6 +7,8 @@ import {
 	NodeOperationError,
 } from 'n8n-workflow';
 import ResourceFactory from '../help/builder/ResourceFactory';
+import { configuredOutputs } from '../help/utils/parameters';
+import { Credentials, OutputType } from '../help/type/enums';
 
 const resourceBuilder = ResourceFactory.build(__dirname);
 
@@ -17,19 +19,18 @@ export class QingflowOa implements INodeType {
 		name: 'qingflowOa',
 		icon: 'file:icon.svg',
 		group: ['transform'],
-		version: 1,
+		version: [1],
+		defaultVersion: 1,
 		description: '轻流OA API集成，支持通讯录、任务委托、应用管理、数据操作等功能',
 		defaults: {
 			name: '轻流OA',
 		},
 		usableAsTool: true,
-		// @ts-ignore
-		inputs: ['main'],
-		// @ts-ignore
-		outputs: ['main'],
+		inputs: ['main'] as INodeTypeDescription['inputs'],
+		outputs: `={{(${configuredOutputs})($parameter)}}`,
 		credentials: [
 			{
-				name: 'qingflowOaApi',
+				name: Credentials.QingflowOaApi,
 				required: true,
 			},
 		],
@@ -39,8 +40,8 @@ export class QingflowOa implements INodeType {
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
 
-		let responseData: IDataObject = {};
-		let returnData: INodeExecutionData[] = [];
+		// 使用数组初始化，支持多输出
+		let returnData: INodeExecutionData[][] = Array.from({ length: 1 }, () => []);
 
 		const resource = this.getNodeParameter('resource', 0);
 		const operation = this.getNodeParameter('operation', 0);
@@ -62,7 +63,29 @@ export class QingflowOa implements INodeType {
 					itemIndex,
 				});
 
-				responseData = await callFunc.call(this, itemIndex);
+				const responseData = await callFunc.call(this, itemIndex);
+
+				// 检查是否有自定义输出类型
+				if (responseData && typeof responseData === 'object' && 'outputType' in responseData) {
+					const typedResponse = responseData as { outputType: OutputType; outputData?: INodeExecutionData[][] };
+					const { outputType } = typedResponse;
+
+					if (outputType === OutputType.Multiple && typedResponse.outputData) {
+						// 多输出模式：直接使用返回的输出数据
+						returnData = typedResponse.outputData;
+					} else if (outputType === OutputType.None) {
+						// 无输出模式
+						return [];
+					}
+					// OutputType.Single 会走下面的默认处理
+				} else {
+					// 默认单输出模式
+					const executionData = this.helpers.constructExecutionMetaData(
+						this.helpers.returnJsonArray(responseData as IDataObject),
+						{ itemData: { item: itemIndex } },
+					);
+					returnData[0].push(...executionData);
+				}
 			} catch (error) {
 				this.logger.error('call function error', {
 					resource,
@@ -73,17 +96,17 @@ export class QingflowOa implements INodeType {
 				});
 
 				if (this.continueOnFail()) {
-					let errorJson = {
-						error: error.message,
-					};
-					if (error.name === 'NodeApiError') {
-						errorJson.error = error?.cause?.error;
-					}
-
-					returnData.push({
-						json: errorJson,
-						pairedItem: itemIndex,
-					});
+					// 优化错误信息提取，优先使用 description
+					const executionErrorData = this.helpers.constructExecutionMetaData(
+						this.helpers.returnJsonArray({
+							error: error.description ?? error.message,
+							...(error.name === 'NodeApiError' && error.cause?.error
+								? { details: error.cause.error }
+								: {}),
+						}),
+						{ itemData: { item: itemIndex } },
+					);
+					returnData[0].push(...executionErrorData);
 					continue;
 				} else if (error.name === 'NodeApiError') {
 					throw error;
@@ -94,13 +117,8 @@ export class QingflowOa implements INodeType {
 					});
 				}
 			}
-			const executionData = this.helpers.constructExecutionMetaData(
-				this.helpers.returnJsonArray(responseData as IDataObject),
-				{ itemData: { item: itemIndex } },
-			);
-			returnData.push(...executionData);
 		}
 
-		return [returnData];
+		return returnData;
 	}
 }
