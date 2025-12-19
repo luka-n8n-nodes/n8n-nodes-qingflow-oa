@@ -30,10 +30,9 @@ class RequestUtils {
 			// 否则返回 result 字段或原始响应
 			return result || response;
 		}
-      
 		// 业务错误（轻流OA返回 200 但 errCode 不为 0）
 		const errorPrefix = isRetry ? '刷新凭证后请求轻流OA API仍然失败' : '请求轻流OA API错误';
-		const errorMsg = `${errorPrefix}: ${errMsg}`;
+		const errorMsg = `${errorPrefix}: ${errMsg || errCode || '未知错误'}`;
 		
 		throw new NodeApiError(context.getNode(), response as JsonObject, {
 			message: errorMsg,

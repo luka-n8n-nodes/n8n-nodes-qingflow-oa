@@ -3,9 +3,9 @@ import RequestUtils from '../../../help/utils/RequestUtils';
 import { ResourceOperations } from '../../../help/type/IResource';
 
 const GetAuditRecordOperate: ResourceOperations = {
-	name: '获取某条数据的流程日志',
+	name: '获取某条流程日志的详细信息',
 	value: 'getAuditRecord',
-	action: '获取某条数据的流程日志',
+	action: '获取某条流程日志的详细信息',
 	options: [
 		{
 			displayName: 'Apply ID',
