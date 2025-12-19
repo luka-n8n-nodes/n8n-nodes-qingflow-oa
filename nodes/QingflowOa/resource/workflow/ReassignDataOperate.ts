@@ -67,12 +67,6 @@ const ReassignDataOperate: ResourceOperations = {
 		if (!body.reassignmentInfo || !Array.isArray(body.reassignmentInfo)) {
 			throw new Error('reassignmentInfo 必须是非空数组');
 		}
-		if (!body.auditNodeId || body.auditNodeId === null) {
-			throw new Error('auditNodeId 不能为空');
-		}
-		if (!body.userIdList || !Array.isArray(body.userIdList)) {
-			throw new Error('userIdList 必须是非空数组');
-		}
 
 		const response = await RequestUtils.request.call(this, {
 			method: 'POST',
