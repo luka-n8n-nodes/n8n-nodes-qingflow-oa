@@ -6,6 +6,7 @@ const GetApplicationDataOperate: ResourceOperations = {
 	name: '获取应用数据',
 	value: 'getApplicationData',
 	action: '获取应用数据',
+	order: 10,
 	options: [
 		{
 			displayName: 'App Key',

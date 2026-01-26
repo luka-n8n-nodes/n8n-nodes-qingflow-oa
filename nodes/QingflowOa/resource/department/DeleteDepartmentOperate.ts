@@ -1,11 +1,13 @@
-import { IDataObject, IExecuteFunctions } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, IHttpRequestOptions } from 'n8n-workflow';
 import RequestUtils from '../../../help/utils/RequestUtils';
 import { ResourceOperations } from '../../../help/type/IResource';
+import { commonOptions, ICommonOptionsValue } from '../../../help/utils/sharedOptions';
 
 const DeleteDepartmentOperate: ResourceOperations = {
 	name: '删除部门',
 	value: 'deleteDepartment',
 	action: '删除部门',
+	order: 50,
 	options: [
 		{
 			displayName: 'Dept ID',
@@ -15,9 +17,11 @@ const DeleteDepartmentOperate: ResourceOperations = {
 			default: '',
 			description: '部门ID，可通过获取部门列表获取',
 		},
+		commonOptions,
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
 		const deptId = this.getNodeParameter('deptId', index) as string;
+		const options = this.getNodeParameter('options', index, {}) as ICommonOptionsValue;
 
 		if (!deptId) {
 			throw new Error('Dept ID 不能为空');
@@ -28,10 +32,16 @@ const DeleteDepartmentOperate: ResourceOperations = {
 			throw new Error('Dept ID 必须是大于0的数字');
 		}
 
-		const response = await RequestUtils.request.call(this, {
+		const requestOptions: IHttpRequestOptions = {
 			method: 'DELETE',
 			url: `/department/${deptIdNum}`,
-		});
+		};
+
+		if (options.timeout) {
+			requestOptions.timeout = options.timeout;
+		}
+
+		const response = await RequestUtils.request.call(this, requestOptions);
 
 		return response as IDataObject;
 	},

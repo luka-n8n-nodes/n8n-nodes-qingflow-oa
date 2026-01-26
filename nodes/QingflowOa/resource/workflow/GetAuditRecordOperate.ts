@@ -1,11 +1,13 @@
-import { IDataObject, IExecuteFunctions } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, IHttpRequestOptions } from 'n8n-workflow';
 import RequestUtils from '../../../help/utils/RequestUtils';
 import { ResourceOperations } from '../../../help/type/IResource';
+import { commonOptions, ICommonOptionsValue } from '../../../help/utils/sharedOptions';
 
 const GetAuditRecordOperate: ResourceOperations = {
 	name: '获取某条流程日志的详细信息',
 	value: 'getAuditRecord',
 	action: '获取某条流程日志的详细信息',
+	order: 20,
 	options: [
 		{
 			displayName: 'Apply ID',
@@ -23,10 +25,12 @@ const GetAuditRecordOperate: ResourceOperations = {
 			default: '',
 			description: '日志纪录ID，可通过施工日志【获取者的销数据操作日志】可带储蓄日志化',
 		},
+		commonOptions,
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
 		const applyId = this.getNodeParameter('applyId', index) as string;
 		const auditRecId = this.getNodeParameter('auditRecId', index) as string;
+		const options = this.getNodeParameter('options', index, {}) as ICommonOptionsValue;
 
 		if (!applyId) {
 			throw new Error('Apply ID 不能为空');
@@ -36,10 +40,16 @@ const GetAuditRecordOperate: ResourceOperations = {
 			throw new Error('Audit Rec ID 不能为空');
 		}
 
-		const response = await RequestUtils.request.call(this, {
+		const requestOptions: IHttpRequestOptions = {
 			method: 'GET',
 			url: `/apply/${applyId}/auditRecord/${auditRecId}`,
-		});
+		};
+
+		if (options.timeout) {
+			requestOptions.timeout = options.timeout;
+		}
+
+		const response = await RequestUtils.request.call(this, requestOptions);
 
 		return response as IDataObject;
 	},

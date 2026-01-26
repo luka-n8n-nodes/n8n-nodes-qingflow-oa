@@ -1,12 +1,13 @@
-import { IDataObject, IExecuteFunctions, NodeOperationError  } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, IHttpRequestOptions, NodeOperationError } from 'n8n-workflow';
 import RequestUtils from '../../../help/utils/RequestUtils';
 import { ResourceOperations } from '../../../help/type/IResource';
-
+import { commonOptions, ICommonOptionsValue } from '../../../help/utils/sharedOptions';
 
 const GetUserIdOperate: ResourceOperations = {
 	name: '通过邮箱或手机号获取成员userId',
 	value: 'getUserId',
 	action: '通过邮箱或手机号获取成员userId',
+	order: 25,
 	options: [
 		{
 			displayName: '查询方式',
@@ -52,24 +53,32 @@ const GetUserIdOperate: ResourceOperations = {
 			default: '',
 			placeholder: '13800138000',
 			description: '用户手机号',
-		}
+		},
+		commonOptions,
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
 		const email = this.getNodeParameter('email', index, '') as string;
 		const phone = this.getNodeParameter('phone', index, '') as string;
+		const options = this.getNodeParameter('options', index, {}) as ICommonOptionsValue;
 
 		if (!email && !phone) {
 			throw new NodeOperationError(this.getNode(), '邮箱或手机号不能同时为空');
 		}
 
-		const response = await RequestUtils.request.call(this, {
+		const requestOptions: IHttpRequestOptions = {
 			method: 'GET',
 			url: '/user/getId',
 			qs: {
 				email: email || '',
 				phone: phone || '',
 			},
-		});
+		};
+
+		if (options.timeout) {
+			requestOptions.timeout = options.timeout;
+		}
+
+		const response = await RequestUtils.request.call(this, requestOptions);
 
 		return response?.result || response;
 	},

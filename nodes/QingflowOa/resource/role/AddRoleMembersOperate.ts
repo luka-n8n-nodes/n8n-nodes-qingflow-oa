@@ -1,7 +1,7 @@
-import { IDataObject, IExecuteFunctions, jsonParse  } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, IHttpRequestOptions, jsonParse } from 'n8n-workflow';
 import RequestUtils from '../../../help/utils/RequestUtils';
 import { ResourceOperations } from '../../../help/type/IResource';
-
+import { commonOptions, ICommonOptionsValue } from '../../../help/utils/sharedOptions';
 
 const defaultBodyJson = JSON.stringify(
 	{
@@ -16,6 +16,7 @@ const AddRoleMembersOperate: ResourceOperations = {
 	name: '增加角色成员',
 	value: 'addRoleMembers',
 	action: '增加角色成员',
+	order: 30,
 	options: [
 		{
 			displayName: 'Role ID',
@@ -36,10 +37,12 @@ const AddRoleMembersOperate: ResourceOperations = {
 				alwaysOpenEditWindow: true,
 			},
 		},
+		commonOptions,
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
 		const roleId = this.getNodeParameter('roleId', index) as string;
 		const bodyJson = this.getNodeParameter('body', index) as string;
+		const options = this.getNodeParameter('options', index, {}) as ICommonOptionsValue;
 
 		if (!roleId) {
 			throw new Error('Role ID 不能为空');
@@ -69,11 +72,17 @@ const AddRoleMembersOperate: ResourceOperations = {
 			throw new Error('请求体中的 userIds 必须是非空数组');
 		}
 
-		const response = await RequestUtils.request.call(this, {
+		const requestOptions: IHttpRequestOptions = {
 			method: 'POST',
 			url: `/role/${roleIdNum}/user`,
 			body,
-		});
+		};
+
+		if (options.timeout) {
+			requestOptions.timeout = options.timeout;
+		}
+
+		const response = await RequestUtils.request.call(this, requestOptions);
 
 		return response as IDataObject;
 	},

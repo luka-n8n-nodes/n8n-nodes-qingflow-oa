@@ -1,6 +1,7 @@
-import { IDataObject, IExecuteFunctions, jsonParse  } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, IHttpRequestOptions, jsonParse  } from 'n8n-workflow';
 import RequestUtils from '../../../help/utils/RequestUtils';
 import { ResourceOperations } from '../../../help/type/IResource';
+import { commonOptions, ICommonOptionsValue } from '../../../help/utils/sharedOptions';
 
 
 const defaultBodyJson = JSON.stringify(
@@ -43,10 +44,12 @@ const ReassignDataOperate: ResourceOperations = {
 				alwaysOpenEditWindow: true,
 			},
 		},
+		commonOptions,
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
 		const applyId = this.getNodeParameter('applyId', index) as string;
 		const bodyJson = this.getNodeParameter('body', index) as string;
+		const options = this.getNodeParameter('options', index, {}) as ICommonOptionsValue;
 
 		if (!applyId) {
 			throw new Error('Apply ID 不能为空');
@@ -68,11 +71,17 @@ const ReassignDataOperate: ResourceOperations = {
 			throw new Error('reassignmentInfo 必须是非空数组');
 		}
 
-		const response = await RequestUtils.request.call(this, {
+		const requestOptions: IHttpRequestOptions = {
 			method: 'POST',
 			url: `/apply/${applyId}/reassign`,
 			body,
-		});
+		};
+
+		if (options.timeout) {
+			requestOptions.timeout = options.timeout;
+		}
+
+		const response = await RequestUtils.request.call(this, requestOptions);
 
 		return response as IDataObject;
 	},

@@ -6,6 +6,7 @@ const GetUsersOperate: ResourceOperations = {
 	name: '获取工作区全部成员',
 	value: 'getAllUsers',
 	action: '获取工作区全部成员',
+	order: 30,
 	options: [
 		{
 			displayName: 'Return All',

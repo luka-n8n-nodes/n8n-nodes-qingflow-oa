@@ -6,6 +6,7 @@ const GetCommentsOperate: ResourceOperations = {
 	name: '获取单条数据的留言信息',
 	value: 'getComments',
 	action: '获取单条数据的留言信息',
+	order: 30,
 	options: [
 		{
 			displayName: 'Apply ID',

@@ -1,11 +1,13 @@
 import { IDataObject, IExecuteFunctions, IHttpRequestOptions } from 'n8n-workflow';
 import RequestUtils from '../../../help/utils/RequestUtils';
 import { ResourceOperations } from '../../../help/type/IResource';
+import { commonOptions, ICommonOptionsValue } from '../../../help/utils/sharedOptions';
 
 const UrgeDataOperate: ResourceOperations = {
 	name: '催办某条数据',
 	value: 'urgeData',
 	action: '催办某条数据',
+	order: 35,
 	options: [
 		{
 			displayName: 'Apply ID',
@@ -24,10 +26,12 @@ const UrgeDataOperate: ResourceOperations = {
 			default: '',
 			description: '需要收入工具表单内容数据的ApplyId，在数据方式基于，基本专业级内司',
 		},
+		commonOptions,
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
 		const applyId = this.getNodeParameter('applyId', index) as string;
 		const userId = this.getNodeParameter('userId', index) as string | undefined;
+		const options = this.getNodeParameter('options', index, {}) as ICommonOptionsValue;
 
 		if (!applyId) {
 			throw new Error('Apply ID 不能为空');
@@ -42,6 +46,10 @@ const UrgeDataOperate: ResourceOperations = {
 			requestOptions.qs = {
 				userId,
 			};
+		}
+
+		if (options.timeout) {
+			requestOptions.timeout = options.timeout;
 		}
 
 		const response = await RequestUtils.request.call(this, requestOptions);

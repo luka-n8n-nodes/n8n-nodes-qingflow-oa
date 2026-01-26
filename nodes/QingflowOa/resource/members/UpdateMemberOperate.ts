@@ -1,7 +1,7 @@
-import { IDataObject, IExecuteFunctions, jsonParse  } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, IHttpRequestOptions, jsonParse } from 'n8n-workflow';
 import RequestUtils from '../../../help/utils/RequestUtils';
 import { ResourceOperations } from '../../../help/type/IResource';
-
+import { commonOptions, ICommonOptionsValue } from '../../../help/utils/sharedOptions';
 
 const defaultBodyJson = JSON.stringify(
 	{
@@ -26,6 +26,7 @@ const UpdateMemberOperate: ResourceOperations = {
 	name: '更新成员',
 	value: 'updateMember',
 	action: '更新成员',
+	order: 40,
 	options: [
 		{
 			displayName: 'User ID',
@@ -47,10 +48,12 @@ const UpdateMemberOperate: ResourceOperations = {
 				alwaysOpenEditWindow: true,
 			},
 		},
+		commonOptions,
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
 		const userId = this.getNodeParameter('userId', index) as string;
 		const bodyJson = this.getNodeParameter('body', index) as string;
+		const options = this.getNodeParameter('options', index, {}) as ICommonOptionsValue;
 
 		if (!userId) {
 			throw new Error('User ID 不能为空');
@@ -80,11 +83,17 @@ const UpdateMemberOperate: ResourceOperations = {
 			throw new Error('传手机号时，areaCode 必填');
 		}
 
-		const response = await RequestUtils.request.call(this, {
+		const requestOptions: IHttpRequestOptions = {
 			method: 'POST',
 			url: `/user/${userId}`,
 			body,
-		});
+		};
+
+		if (options.timeout) {
+			requestOptions.timeout = options.timeout;
+		}
+
+		const response = await RequestUtils.request.call(this, requestOptions);
 
 		return response as IDataObject;
 	},

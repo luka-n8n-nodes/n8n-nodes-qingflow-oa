@@ -6,6 +6,7 @@ const GetProfileItemsOperate: ResourceOperations = {
 	name: '获取个人在当前工作区全部事项信息',
 	value: 'getProfileItems',
 	action: '获取个人在当前工作区全部事项信息',
+	order: 15,
 	options: [
 		{
 			displayName: 'User ID',

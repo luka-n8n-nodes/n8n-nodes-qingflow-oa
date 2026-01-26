@@ -1,7 +1,7 @@
-import { IDataObject, IExecuteFunctions, jsonParse  } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, IHttpRequestOptions, jsonParse } from 'n8n-workflow';
 import RequestUtils from '../../../help/utils/RequestUtils';
 import { ResourceOperations } from '../../../help/type/IResource';
-
+import { commonOptions, ICommonOptionsValue } from '../../../help/utils/sharedOptions';
 
 const defaultBodyJson = JSON.stringify(
 	{
@@ -22,6 +22,7 @@ const UpdateAppOperate: ResourceOperations = {
 	name: '更新应用基本信息',
 	value: 'updateApp',
 	action: '更新应用基本信息',
+	order: 40,
 	options: [
 		{
 			displayName: 'App Key',
@@ -43,10 +44,12 @@ const UpdateAppOperate: ResourceOperations = {
 				alwaysOpenEditWindow: true,
 			},
 		},
+		commonOptions,
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
 		const appKey = this.getNodeParameter('appKey', index) as string;
 		const bodyJson = this.getNodeParameter('body', index) as string;
+		const options = this.getNodeParameter('options', index, {}) as ICommonOptionsValue;
 
 		if (!appKey) {
 			throw new Error('App Key 不能为空');
@@ -63,11 +66,17 @@ const UpdateAppOperate: ResourceOperations = {
 			throw new Error('请求体 JSON 格式无效: ' + error.message);
 		}
 
-		const response = await RequestUtils.request.call(this, {
+		const requestOptions: IHttpRequestOptions = {
 			method: 'POST',
 			url: `/app/${appKey}`,
 			body,
-		});
+		};
+
+		if (options.timeout) {
+			requestOptions.timeout = options.timeout;
+		}
+
+		const response = await RequestUtils.request.call(this, requestOptions);
 
 		return response as IDataObject;
 	},

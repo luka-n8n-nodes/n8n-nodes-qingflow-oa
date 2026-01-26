@@ -6,6 +6,7 @@ const GetDelegatesOperate: ResourceOperations = {
 	name: '获取委托列表',
 	value: 'getDelegates',
 	action: '获取委托列表',
+	order: 20,
 	options: [
 		{
 			displayName: 'Type',

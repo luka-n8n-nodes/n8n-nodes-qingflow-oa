@@ -6,6 +6,7 @@ const GetAppInfoOperate: ResourceOperations = {
 	name: '获取应用基本信息',
 	value: 'getAppInfo',
 	action: '获取应用基本信息',
+	order: 20,
 	options: [
 		{
 			displayName: 'App Key',

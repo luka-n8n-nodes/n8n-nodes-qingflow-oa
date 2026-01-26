@@ -6,6 +6,7 @@ const GetAllAppsOperate: ResourceOperations = {
 	name: '获取工作区所有应用信息',
 	value: 'getAllApps',
 	action: '获取工作区所有应用信息',
+	order: 15,
 	options: [
 		{
 			displayName: 'User ID',

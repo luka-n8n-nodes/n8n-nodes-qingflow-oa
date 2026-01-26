@@ -1,6 +1,7 @@
-import { IDataObject, IExecuteFunctions, jsonParse  } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, IHttpRequestOptions, jsonParse  } from 'n8n-workflow';
 import RequestUtils from '../../../help/utils/RequestUtils';
 import { ResourceOperations } from '../../../help/type/IResource';
+import { commonOptions, ICommonOptionsValue } from '../../../help/utils/sharedOptions';
 
 
 const defaultBodyJson = JSON.stringify(
@@ -41,6 +42,7 @@ const UpdateSubManagerOperate: ResourceOperations = {
 	name: '更新子管理员',
 	value: 'updateSubManager',
 	action: '更新子管理员',
+	order: 30,
 	options: [
 		{
 			displayName: 'Sub Manager ID',
@@ -62,10 +64,12 @@ const UpdateSubManagerOperate: ResourceOperations = {
 				alwaysOpenEditWindow: true,
 			},
 		},
+		commonOptions,
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
 		const subManagerId = this.getNodeParameter('subManagerId', index) as number;
 		const bodyJson = this.getNodeParameter('body', index) as string;
+		const options = this.getNodeParameter('options', index, {}) as ICommonOptionsValue;
 
 		if (!subManagerId || subManagerId === 0) {
 			throw new Error('Sub Manager ID 不能为空且必须大于0');
@@ -99,11 +103,17 @@ const UpdateSubManagerOperate: ResourceOperations = {
 			throw new Error('deptIds 必须是数组');
 		}
 
-		const response = await RequestUtils.request.call(this, {
+		const requestOptions: IHttpRequestOptions = {
 			method: 'PUT',
 			url: `/manager/sub/${subManagerId}`,
 			body,
-		});
+		};
+
+		if (options.timeout) {
+			requestOptions.timeout = options.timeout;
+		}
+
+		const response = await RequestUtils.request.call(this, requestOptions);
 
 		return response as IDataObject;
 	},
