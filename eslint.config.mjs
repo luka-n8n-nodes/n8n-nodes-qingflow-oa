@@ -18,6 +18,7 @@ export default [
 			'@typescript-eslint/no-unsafe-function-type': 'off',
 			'@typescript-eslint/no-duplicate-enum-values': 'off',
 			'n8n-nodes-base/node-param-collection-type-unsorted-items': 'off',
+			'n8n-nodes-base/node-param-fixed-collection-type-unsorted-items': 'off',
 			'no-useless-catch': 'off',
 			'prefer-const': 'warn',
 		},
