@@ -1,5 +1,6 @@
 import { IExecuteFunctions, IHttpRequestOptions, JsonObject, NodeApiError } from 'n8n-workflow';
 import { Credentials } from '../type/enums';
+import { getErrorMessage, QingflowErrorCode } from './ErrorCodes';
 
 class RequestUtils {
 	/**
@@ -32,10 +33,12 @@ class RequestUtils {
 		}
 		// 业务错误（轻流OA返回 200 但 errCode 不为 0）
 		const errorPrefix = isRetry ? '刷新凭证后请求轻流OA API仍然失败' : '请求轻流OA API错误';
-		const errorMsg = `${errorPrefix}: ${errMsg || errCode || '未知错误'}`;
+		// 使用错误码枚举匹配错误信息
+		const errorDetail = getErrorMessage(errCode, errMsg);
+		const errorMessage = `${errorPrefix}: ${errorDetail}`;
 		
 		throw new NodeApiError(context.getNode(), response as JsonObject, {
-			message: errorMsg,
+			message: errorMessage,
 			description: response?.troubleshooter || '',
 		});
 	}
@@ -87,7 +90,7 @@ class RequestUtils {
 			const { errCode } = response || {};
 
 			// 处理 token 过期（轻流OA即使错误也返回 200，所以需要检查 errCode）
-			if (errCode === 49300) {
+			if (errCode === QingflowErrorCode.INVALID_ACCESS_TOKEN) {
 				// 重新获取 token 后的请求
 				const retryResponse = await RequestUtils.originRequest.call(this, options, true);
 				// 使用统一的响应处理函数，标记为重试请求

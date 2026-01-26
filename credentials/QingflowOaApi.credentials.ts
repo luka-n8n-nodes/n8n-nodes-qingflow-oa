@@ -65,6 +65,13 @@ export class QingflowOaApi implements ICredentialType {
             description: '工作区权限组的凭证密钥（wsSecret），获取方式参考轻流文档：基本概念介绍-wsSecret',
         },
         {
+            displayName: '用户ID',
+            name: 'userId',
+            type: 'string',
+            default: '',
+            description: 'userId 可以通过 通讯录 - 成员 - 通过邮箱或手机号获取成员userId 获得。如果填写，将自动添加到请求头中',
+        },
+        {
             displayName: 'AccessToken',
             name: 'accessToken',
             type: 'hidden',
@@ -81,6 +88,7 @@ export class QingflowOaApi implements ICredentialType {
         properties: {
             headers: {
                 'accessToken': '={{$credentials.accessToken}}',
+                'userId': '={{$credentials.userId || ""}}',
             }
         },
     };
@@ -135,7 +143,7 @@ export class QingflowOaApi implements ICredentialType {
     test: ICredentialTestRequest = {
         request: {
             baseURL: '={{$credentials.baseUrl}}',
-            url: '/resignUrl',
+            url: '/dashes',
             method: 'POST',
             body: {
                 url: '={{$credentials.baseUrl}}',

@@ -11,9 +11,8 @@ const GetProfileItemsOperate: ResourceOperations = {
 			displayName: 'User ID',
 			name: 'userId',
 			type: 'string',
-			required: true,
 			default: '',
-			description: '用户ID',
+			description: '用户ID，如果为空则使用凭证中配置的userId',
 		},
 		{
 			displayName: 'Type',
@@ -202,14 +201,20 @@ const GetProfileItemsOperate: ResourceOperations = {
 		},
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
-		const userId = this.getNodeParameter('userId', index) as string;
+		let userId = this.getNodeParameter('userId', index, '') as string;
 		const returnAll = this.getNodeParameter('returnAll', index, false) as boolean;
 		let limit = this.getNodeParameter('limit', index, 50) as number;
 		const type = this.getNodeParameter('type', index) as number | undefined;
 		const status = this.getNodeParameter('status', index) as number | undefined;
 
+		// 如果userId为空，则使用凭证中的userId
 		if (!userId) {
-			throw new Error('User ID 不能为空');
+			const credentials = await this.getCredentials('qingflowOaApi');
+			userId = credentials.userId as string;
+		}
+
+		if (!userId) {
+			throw new Error('User ID 不能为空，请在节点参数或凭证中配置');
 		}
 
 		// 限制最大值

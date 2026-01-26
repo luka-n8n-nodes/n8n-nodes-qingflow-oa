@@ -13,20 +13,11 @@ const GetAppFormOperate: ResourceOperations = {
 			type: 'string',
 			required: true,
 			default: '',
-			description: '应用标识，数组为安全主数据标识为主——appKey',
-		},
-		{
-			displayName: 'User ID',
-			name: 'userId',
-			type: 'string',
-
-			default: '',
-			description: 'UserId为给定，数据工作区总资格化持续工作权限配置，当前立个数据赋权书',
+			description: '应用ID，获取方式参考：基本概念介绍——appKey',
 		},
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
 		const appKey = this.getNodeParameter('appKey', index) as string;
-		const userId = this.getNodeParameter('userId', index) as string | undefined;
 
 		if (!appKey) {
 			throw new Error('App Key 不能为空');
@@ -36,12 +27,6 @@ const GetAppFormOperate: ResourceOperations = {
 			method: 'GET',
 			url: `/app/${appKey}/form`,
 		};
-
-		if (userId) {
-			requestOptions.qs = {
-				userId,
-			};
-		}
 
 		const response = await RequestUtils.request.call(this, requestOptions);
 

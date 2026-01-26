@@ -13,7 +13,7 @@ const GetApplicationDataDetailOperate: ResourceOperations = {
 			type: 'string',
 			required: true,
 			default: '',
-			description: '应用数据ID',
+			description: '数据ID，获取方式参考：基本概念介绍',
 		},
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {

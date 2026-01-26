@@ -11,22 +11,36 @@ const GetAllAppsOperate: ResourceOperations = {
 			displayName: 'User ID',
 			name: 'userId',
 			type: 'string',
-
 			default: '',
-			description: '优选方案，可添加当前连接的的程序访问，userId为给定，欢迎工作区全员访问',
+			description: '成员外部ID，可查询指定成员的可见应用。如果为空则使用凭证中配置的userId；若凭证中也未配置，则返回工作区全部应用。',
 		},
 		{
 			displayName: 'Favourite',
 			name: 'favourite',
-			type: 'number',
-
+			type: 'options',
+			options: [
+				{
+					name: '获取当前用户所有的可见应用',
+					value: 0,
+				},
+				{
+					name: '获取当前用户可见中收藏的应用',
+					value: 1,
+				},
+			],
 			default: 0,
-			description: 'UserId不满足当前，数据展现下：1，工作管理员的可访问数据机器端数据，管理端时（数据权限）',
+			description: 'UserId不传时无效。1-获取当前用户可见中收藏的应用，0-获取当前用户所有的可见应用（默认值）',
 		},
 	],
 	async call(this: IExecuteFunctions, index: number): Promise<IDataObject | IDataObject[]> {
-		const userId = this.getNodeParameter('userId', index) as string | undefined;
+		let userId = this.getNodeParameter('userId', index, '') as string;
 		const favourite = this.getNodeParameter('favourite', index) as number | undefined;
+
+		// 如果userId为空，则使用凭证中的userId
+		if (!userId) {
+			const credentials = await this.getCredentials('qingflowOaApi');
+			userId = (credentials.userId as string) || '';
+		}
 
 		const requestOptions: IHttpRequestOptions = {
 			method: 'GET',
@@ -36,9 +50,10 @@ const GetAllAppsOperate: ResourceOperations = {
 		const qs: IDataObject = {};
 		if (userId) {
 			qs.userId = userId;
-		}
-		if (favourite !== undefined && favourite !== null) {
-			qs.favourite = favourite;
+			// favourite 只有在 userId 有值时才有效
+			if (favourite !== undefined && favourite !== null) {
+				qs.favourite = favourite;
+			}
 		}
 
 		if (Object.keys(qs).length > 0) {

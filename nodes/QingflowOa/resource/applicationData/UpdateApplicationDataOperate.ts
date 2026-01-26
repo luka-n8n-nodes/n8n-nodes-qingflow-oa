@@ -30,7 +30,7 @@ const UpdateApplicationDataOperate: ResourceOperations = {
 			type: 'json',
 			default: defaultBodyJson,
 			required: true,
-			description: '参考：https://exiao.yuque.com/ixwxsb/bgzs0e/cv986qy3875cvxaf',
+			description: '参考：https://exiao.yuque.com/ixwxsb/cqfg2y/if9zm645rv7zfqpd',
 			typeOptions: {
 				alwaysOpenEditWindow: true,
 			},
