@@ -131,7 +131,7 @@ const GetApplicationDataOperate: ResourceOperations = {
 					displayName: '查询条件',
 					values: [
 						{
-							displayName: '成员 User ID 列表',
+							displayName: '成员	User ID	列表',
 							name: 'searchUserIds',
 							type: 'string',
 							default: '',
@@ -142,8 +142,7 @@ const GetApplicationDataOperate: ResourceOperations = {
 							name: 'searchKeys',
 							type: 'string',
 							default: '',
-							description:
-								'数组内的字段为或条件搜索，当searchKey不为null的时候，此字段会被忽略，搜索为模糊搜索。多个用英文逗号分隔，如：aa,bb,cc',
+							description: '数组内的字段为或条件搜索，当searchKey不为null的时候，此字段会被忽略，搜索为模糊搜索。多个用英文逗号分隔，如：aa,bb,cc',
 						},
 						{
 							displayName: '筛选数据范围',
@@ -151,10 +150,19 @@ const GetApplicationDataOperate: ResourceOperations = {
 							type: 'options',
 							default: 1,
 							options: [
-								{ name: '全部', value: 1 },
-								{ name: '已填写', value: 2 },
-								{ name: '未填写', value: 3 },
-							],
+								{
+									name: '全部',
+									value: 1
+								},
+								{
+									name: '已填写',
+									value: 2
+								},
+								{
+									name: '未填写',
+									value: 3
+								},
+					]
 						},
 						{
 							displayName: '搜索关键字',
@@ -164,17 +172,17 @@ const GetApplicationDataOperate: ResourceOperations = {
 							description: '搜索关键字，搜索为模糊搜索',
 						},
 						{
-							displayName: '选项 ID 列表',
+							displayName: '选项	ID	列表',
 							name: 'searchOptions',
 							type: 'string',
 							default: '',
 							description: '单选多选中，搜索答案中包含这些选项的申请，由optionId组成。多个用英文逗号分隔，如：100,101,102',
 						},
 						{
-							displayName: '字段 ID (queId)',
+							displayName: '字段	ID (queId)',
 							name: 'queId',
 							type: 'number',
-							required: true,
+						required:	true,
 							default: 0,
 							description: '字段ID（必填），如果设置了筛选查询条件，此处为必填项，queId获取见文档',
 						},
@@ -192,7 +200,7 @@ const GetApplicationDataOperate: ResourceOperations = {
 							default: '',
 							description: '数字模块中，是搜索结果中最小值；日期类型，就是最早日期',
 						},
-					],
+				],
 				},
 			],
 		},
