@@ -13,7 +13,7 @@ const GetAppInfoOperate: ResourceOperations = {
 			name: 'appKey',
 			type: 'string',
 			default: '',
-			description: '应用标识，不带查询参数上工作区的增属性',
+			description: '应用ID，不填则默认工作区内所有应用',
 		},
 		{
 			displayName: 'Return All',
@@ -53,7 +53,7 @@ const GetAppInfoOperate: ResourceOperations = {
 		const fetchPage = async (pageNum: number, pageSize: number) => {
 			const requestOptions: IHttpRequestOptions = {
 				method: 'GET',
-				url: '/app/apps',
+				url: '/apps',
 			};
 
 			const qs: IDataObject = {};
