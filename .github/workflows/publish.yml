@@ -160,10 +160,6 @@ jobs:
           echo "📊 包大小:"
           du -sh dist/
 
-      - name: 🚀 发布到 NPM（手动触发）
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true'
-        run: npm publish --provenance --access public
-
       - name: 🧪 模拟发布（Dry Run）
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true'
         run: |
@@ -177,6 +173,19 @@ jobs:
           npm publish --dry-run --provenance --access public --tag dry-run
           git checkout -- package.json package-lock.json
 
+      - name: ⚠️ 检查 npm 是否已存在该版本（手动触发）
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true'
+        run: |
+          PKG_VER=$(node -p "require('./package.json').version")
+          NPM_PKG="@luka-cat-mimi/n8n-nodes-qingflow-oa"
+          if npm view "${NPM_PKG}@${PKG_VER}" version >/dev/null 2>&1; then
+            echo "::error::版本 ${PKG_VER} 已在 npm 上发布，无法重复发布。"
+            echo "常见原因：上次已成功发到 npm，但 main 上的 package.json 未同步到该版本，再次选择 patch 仍会生成 ${PKG_VER}。"
+            echo "处理：在仓库将 package.json / package-lock.json 升到下一版（例如 1.2.3）并推送后再运行本工作流；或拉取/合并远程 main 后再触发。"
+            exit 1
+          fi
+          echo "✅ npm 上尚无 ${PKG_VER}，继续提交并发布"
+
       - name: 📤 提交版本变更（手动触发）
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true'
         run: |
@@ -188,6 +197,10 @@ jobs:
           git push origin HEAD:main
           # 仅强制更新该版本 tag 指向本次提交（不动 main 以外分支）
           git push origin "refs/tags/${NEW_VERSION}" --force
+
+      - name: 🚀 发布到 NPM（手动触发）
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true'
+        run: npm publish --provenance --access public
 
       # ===== 公共步骤：GitHub Release + 通知 =====
       - name: 📋 生成变更日志
@@ -295,6 +308,7 @@ jobs:
           echo "2. GitHub Token 权限是否足够（需要 id-token: write）"
           echo "3. 代码是否通过 lint 检查"
           echo "4. 构建是否成功"
+          echo "5. 若日志含「cannot publish over the previously published versions」：该版本已在 npm，请把仓库 package.json 升到下一版并与 main 对齐后再发布"
           echo ""
           echo "查看详细日志: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
