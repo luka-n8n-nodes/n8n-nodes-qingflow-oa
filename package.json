@@ -1,6 +1,6 @@
 {
     "name": "@luka-cat-mimi/n8n-nodes-qingflow-oa",
-    "version": "1.2.4",
+    "version": "1.2.1",
     "description": "轻流OA N8N 集成插件",
     "keywords": [
         "n8n",
@@ -29,12 +29,14 @@
     },
     "main": "index.js",
     "scripts": {
-        "build": "npx rimraf dist && tsc && gulp build:icons",
-        "dev": "tsc --watch",
+        "build": "n8n-node build",
+        "build:watch": "tsc --watch",
+        "dev": "n8n-node dev",
         "format": "prettier credentials nodes --write",
-        "lint": "eslint \"credentials/**/*.ts\" \"nodes/**/*.ts\" package.json",
-        "lintfix": "eslint \"credentials/**/*.ts\" \"nodes/**/*.ts\" package.json --fix",
-        "prepublishOnly": "npm run build && npm run lint"
+        "lint": "n8n-node lint",
+        "lint:fix": "n8n-node lint --fix",
+        "release": "n8n-node release",
+        "prepublishOnly": "npm run build"
     },
     "files": [
         "dist"
@@ -49,17 +51,17 @@
         ]
     },
     "devDependencies": {
-        "@types/node": "^20.0.0",
         "@n8n/node-cli": "*",
-        "eslint": "9.32.0",
-        "prettier": "3.6.2",
-        "release-it": "^19.0.4",
-        "typescript": "5.9.2",
-        "glob": "^10.4.5",
-        "gulp": "^5.0.0",
-        "require-glob": "^4.1.0"
+        "@types/node": "^25.6.2",
+        "eslint": "9.39.4",
+        "prettier": "3.8.3",
+        "release-it": "20.0.1",
+        "typescript": "5.9.3"
     },
     "peerDependencies": {
         "n8n-workflow": "*"
+    },
+    "dependencies": {
+        "glob": "^13.0.6"
     }
 }
