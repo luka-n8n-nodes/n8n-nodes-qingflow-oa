@@ -169,11 +169,12 @@ jobs:
         run: |
           # npm publish --dry-run 仍会向 registry 校验版本；若 package.json 版本已在 npm 上存在会直接失败。
           # 使用仅用于演练的 prerelease 版本号，结束后还原 package.json / package-lock.json。
+          # prerelease 版本必须带 --tag（任意非 latest 的 dist-tag 即可，dry-run 不会真发布）。
           BASE_VER=$(node -p "require('./package.json').version")
           DRY_VER="${BASE_VER}-dry.${GITHUB_RUN_ID}"
           echo "🧪 Dry-run 使用临时版本: $DRY_VER（不会推送到 npm）"
           npm version "$DRY_VER" --no-git-tag-version
-          npm publish --dry-run --provenance --access public
+          npm publish --dry-run --provenance --access public --tag dry-run
           git checkout -- package.json package-lock.json
 
       - name: 📤 提交版本变更（手动触发）
