@@ -182,8 +182,12 @@ jobs:
         run: |
           git add package.json package-lock.json
           git commit -m "chore: release ${{ env.NEW_VERSION }}"
-          git tag ${{ env.NEW_VERSION }} -m "Release ${{ env.NEW_VERSION }}"
-          git push origin HEAD:main --follow-tags
+          # fetch-depth: 0 会拉下远程 tag；若 NEW_VERSION 已存在（重试/曾建 tag），直接 git tag 会失败
+          git tag -d "${NEW_VERSION}" 2>/dev/null || true
+          git tag "${NEW_VERSION}" -m "Release ${{ env.NEW_VERSION }}"
+          git push origin HEAD:main
+          # 仅强制更新该版本 tag 指向本次提交（不动 main 以外分支）
+          git push origin "refs/tags/${NEW_VERSION}" --force
 
       # ===== 公共步骤：GitHub Release + 通知 =====
       - name: 📋 生成变更日志
